@@ -1,3 +1,15 @@
+"""
+TODO:
+    крутить мяч при отскоку от ракетки:
+        ракетка едет вниз - мяч закручивается вверх
+        ракетка едет вверх - мяч закручивается вниз
+    ожидание перед запуском мяча
+    звуки: гол мне и противнику, отскок
+    противник слишком сильный!
+    выбрать режим игры: с БОТом или человеком
+    уровень сложности
+"""
+
 import pygame
 import sys
 from degrees_to_velocity import degrees_to_velocity
@@ -9,55 +21,70 @@ clock = pygame.time.Clock()
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-FPS = 500
+FPS = 1000
+
+player_1_width = 5  # ширина игрока в пикселях
+player_1_height = 75  # высота игрока в пикселях
+player_1 = pygame.Rect((0, 0, player_1_width, player_1_height))  # координаты x и y, ширина, высота
+
+player_2_width = 5  # ширина игрока в пикселях
+player_2_height = 75  # высота игрока в пикселях
+player_2 = pygame.Rect((0, 0, player_2_width, player_2_height))  # координаты x и y, ширина, высота
+
+def players_to_center():
+    player_1.x = screen_width * 0.1
+    player_1.y = screen_height // 2 - player_1_height // 2
+    player_2.x = screen_width * 0.9 - player_2_width
+    player_2.y = screen_height // 2 - player_1_height // 2
 
 # экран
-screen_width = 800  # ширина экрана в пикселях
-screen_height = 600  # высота экрана в пикселях
-screen = pygame.display.set_mode((screen_width, screen_height))  # экран
+screen_info = pygame.display.Info()  # собираем информацию о экране
+screen_width = screen_info.current_w  # ширина экрана в пикселях
+screen_height = screen_info.current_h  # высота экрана в пикселях
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)  # экран
 pygame.display.set_caption("Пин - Понг")
 
 # игрок 1
-player_1_width = 5  # ширина игрока в пикселях
-player_1_height = 75  # высота игрока в пикселях
 player_1_x = 50
-player_1_y = screen_height // 2 - player_1_height // 2
 player_1_score = 0  # забитые голы 1 игрока
 player_1_speed = 2
-player_1 = pygame.Rect((player_1_x, player_1_y, player_1_width, player_1_height))  # координаты x и y, ширина, высота
+players_to_center()
 
 # игрок 2
-player_2_width = 5  # ширина игрока в пикселях
-player_2_height = 75  # высота игрока в пикселях
 player_2_x = screen_width - player_2_width - 50
-player_2_y = screen_height // 2 - player_1_height // 2
 player_2_score = 0  # забитые голы 2 игрока
 player_2_speed = 2
-player_2 = pygame.Rect((player_2_x, player_2_y, player_2_width, player_2_height))  # координаты x и y, ширина, высота
+players_to_center()
+
 
 # мяч
+# сброс мяча
+def ball_to_center() -> tuple:
+    ball.x = screen_width // 2 - ball_width // 2
+    ball.y = screen_height // 2 - ball_height // 2
+
+def rotate_ball():
+    if randint(0, 1) == 0:
+        direction = randint(255, 315)
+    else:
+        direction = randint(90, 135)
+    velocity = degrees_to_velocity(direction, 2)
+    return velocity
+
 ball_width = 5  # ширина мяча в пикселях
 ball_height = 5  # высота мяча в пикселях
-ball_x = screen_width // 2 - ball_width // 2
-ball_y = screen_height // 2 - ball_height // 2
 ball_speed = 2
-velocity = degrees_to_velocity(45, ball_speed)
+ball = pygame.Rect((0, 0, ball_width, ball_height))  # координаты x и y, ширина, высота
+ball_to_center()
+velocity = rotate_ball()
 ball_speed_x = velocity[0]
 ball_speed_y = velocity[1]
-ball = pygame.Rect((ball_x, ball_y, ball_width, ball_height))  # координаты x и y, ширина, высота
+
+clock = pygame.time.Clock()
 
 # табло
 score_left = pygame.font.Font(None, 60)
 score_right = pygame.font.Font(None, 60)
-
-# сброс мяча
-def ball_to_center():
-    ball.x = screen_width // 2 - ball_width // 2
-    ball.y = screen_height // 2 - ball_height // 2
-    if randint(0, 1) == 0:
-        velocity = degrees_to_velocity(randint(45, 135), 10)
-    else:
-        velocity = degrees_to_velocity(randint(45, 135), 10)
 
 # главный цикл
 while True: 
@@ -71,6 +98,7 @@ while True:
                 pygame.quit()
                 sys.exit()
 
+
     # движение игрока 1
     keys = pygame.key.get_pressed()  # собираем нажатые клавиши
     if keys[pygame.K_w]:  # обрабатываем нажатые клавиши
@@ -81,7 +109,7 @@ while True:
         player_1.y += player_1_speed
         if player_1.y > screen_height - player_1_height:
             player_1.y = screen_height - player_1_height  # игрок 1 опустился вниз
-
+    """     
     # движение игрока 2
     if keys[pygame.K_UP]:
         player_2.y -= player_2_speed  # игрок 2 поднялся вверх
@@ -91,21 +119,48 @@ while True:
         player_2.y += player_2_speed
         if player_2.y > screen_height - player_2_height:
             player_2.y = screen_height - player_2_height  # игрок 2 опустился вниз
-
+    """
+    # логика
     # движение мячика
     ball.x -= ball_speed_x  # мяч всегда движется со своей скоростью по x
     ball.y -= ball_speed_y  # мяч всегда движется со своей скоростью по y
+
+    # противник БОТ
+    if ball.centery < player_2.centery:  # мяч выще ракетки
+        player_2.y -= player_2_speed 
+    if ball.centery > player_2.centery:  # мяч ниже ракетки
+        player_2.y += player_2_speed 
+        
+    
+    # голы
+    # гол правого игрока
     if ball.x < 0:  # мяч вылетел за левую границу экрана
         player_2_score += 1
         ball_to_center()
+        players_to_center()
+        velocity = rotate_ball()
+        ball_speed_x = velocity[0]
+        ball_speed_y = velocity[1]
+        pygame.time.delay(1000)
+
+    # гол левого игрока
     if ball.x > screen_width - ball_width:  # мяч вылетел за правую границу экрана
         player_1_score += 1
         ball_to_center()
+        players_to_center()
+        velocity = rotate_ball()
+        ball_speed_x = velocity[0]
+        ball_speed_y = velocity[1]
+        pygame.time.delay(1000)
+        
+
+    # вылеты в верх и низ
     if ball.y < 0:  # мяч вылетел за верхнюю границу экрана
         ball_speed_y *= -1
     if ball.y > screen_height - ball_height:  # мяч вылетел за нижнюю границу экрана
         ball_speed_y *= -1
 
+    # отскок от ракеток
     if ball.colliderect(player_1) or ball.colliderect(player_2):
         ball_speed_x *= -1
 
@@ -118,13 +173,6 @@ while True:
     score_right_img = score_left.render(str(player_2_score), True, WHITE)
     screen.blit(score_left_img, (screen_width * 0.25, 20))
     screen.blit(score_right_img, (screen_width * 0.72, 20))
-    line = pygame.draw.line(
-        screen,
-        WHITE,
-        [screen_width // 2, 0],
-        [screen_width // 2, screen_height],
-        3
-    )
     pygame.display.flip()  #обновляем экран 
 
     clock.tick(FPS)  # количество кадров в секунду
