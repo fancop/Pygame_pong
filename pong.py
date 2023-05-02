@@ -4,9 +4,10 @@ TODO:
         ракетка едет вниз - мяч закручивается вверх
         ракетка едет вверх - мяч закручивается вниз
     звуки: гол мне и противнику, отскок
-    противник слишком сильный!
+    ослабить противника: он ждёт и реагирует потом
     выбрать режим игры: с БОТом или человеком
     уровень сложности
+    ООП!!!
 """
 
 import pygame
@@ -41,18 +42,21 @@ screen_info = pygame.display.Info()  # собираем информацию о 
 screen_width = screen_info.current_w  # ширина экрана в пикселях
 screen_height = screen_info.current_h  # высота экрана в пикселях
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)  # экран
+screen_rect = screen.get_rect()  # снимаем прямоугольник с экрана
 pygame.display.set_caption("Пин - Понг")
 
 # игрок 1
 player_1_x = 50
 player_1_score = 0  # забитые голы 1 игрока
 player_1_speed = 2
+player_1_prev = player_1.y
 players_to_center()
 
 # игрок 2
 player_2_x = screen_width - player_2_width - 50
 player_2_score = 0  # забитые голы 2 игрока
 player_2_speed = 2
+player_2_prev = player_2.y
 players_to_center()
 
 
@@ -63,12 +67,15 @@ def ball_to_center() -> tuple:
     ball.y = screen_height // 2 - ball_height // 2
 
 def rotate_ball():
+    """
+    Возвращает скорость по х, скорость по у, направление
+    """
     if randint(0, 1) == 0:
         direction = randint(255, 315)
     else:
         direction = randint(90, 135)
     velocity = degrees_to_velocity(direction, 2)
-    return velocity
+    return (velocity[0], velocity[1], direction)
 
 ball_width = 5  # ширина мяча в пикселях
 ball_height = 5  # высота мяча в пикселях
@@ -78,6 +85,7 @@ ball_to_center()
 velocity = rotate_ball()
 ball_speed_x = velocity[0]
 ball_speed_y = velocity[1]
+ball_direction = velocity[2]
 
 clock = pygame.time.Clock()
 
@@ -124,12 +132,24 @@ while True:
     ball.x -= ball_speed_x  # мяч всегда движется со своей скоростью по x
     ball.y -= ball_speed_y  # мяч всегда движется со своей скоростью по y
 
+    # печатаем движения левого игрока
+    if player_1.y > player_1_prev:
+        print("еду вниз")
+    elif player_1.y < player_1_prev:
+        print("еду вверх")
+    player_1_prev = player_1.y 
+
     # противник БОТ
     if ball.centery < player_2.centery:  # мяч выще ракетки
         player_2.y -= player_2_speed 
     if ball.centery > player_2.centery:  # мяч ниже ракетки
         player_2.y += player_2_speed 
         
+    # ограничения движений БОТа
+    if player_2.top < 0:
+        player_2.top = 0
+    if player_2.bottom > screen_rect.bottom:
+        player_2.bottom = screen_rect.bottom
     
     # голы
     # гол правого игрока
@@ -154,9 +174,9 @@ while True:
         
 
     # вылеты в верх и низ
-    if ball.y < 0:  # мяч вылетел за верхнюю границу экрана
+    if ball.top < 0:  # вылет вверх
         ball_speed_y *= -1
-    if ball.y > screen_height - ball_height:  # мяч вылетел за нижнюю границу экрана
+    if ball.y > screen_height - ball_height:  # вылет вниз
         ball_speed_y *= -1
 
     # отскок от ракеток
@@ -176,3 +196,6 @@ while True:
 
     clock.tick(FPS)  # количество кадров в секунду
 
+"""
+https://sfbgames.itch.io/chiptone
+"""
